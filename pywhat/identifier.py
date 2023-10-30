@@ -1,5 +1,4 @@
-import glob
-import os.path
+from pathlib import Path
 from typing import Callable, Optional
 
 import pywhat.magic_numbers
@@ -48,27 +47,29 @@ class Identifier:
         identify_obj: dict = {"File Signatures": {}, "Regexes": {}}
         search = []
 
-        if not only_text and os.path.isdir(text):
+        text_path = Path(text).resolve()
+        if not only_text and text_path.is_dir():
             # if input is a directory, recursively search for all of the files
-            for myfile in glob.iglob(text + "/**", recursive=True):
-                if os.path.isfile(myfile):
-                    search.append(os.path.abspath(myfile))
+            for myfile in text_path.glob("**/*"):
+                if myfile.is_file():
+                    search.append(str(myfile.resolve()))
         else:
-            search = [text]
+            search.append(text)
 
         for string in search:
-            if not only_text and os.path.isfile(string):
-                if os.path.isdir(text):
-                    short_name = string.replace(os.path.abspath(text), "")
+            str_path = Path(string)
+            if not only_text and str_path.is_file():
+                if text_path.is_dir():
+                    short_name = str(str_path.relative_to(text_path))
                 else:
-                    short_name = os.path.basename(string)
+                    short_name = str_path.name
 
-                magic_numbers = pywhat.magic_numbers.get_magic_nums(string)
-                with open(string, "r", encoding="utf-8", errors="ignore") as file:
+                magic_numbers = pywhat.magic_numbers.get_magic_nums(str_path)
+                with open(str_path, "r", encoding="utf-8", errors="ignore") as file:
                     contents = [file.read()]
 
                 if include_filenames:
-                    contents.append(os.path.basename(string))
+                    contents.append(str_path.name)
 
                 regex = self._regex_id.check(
                     contents, dist=dist, boundaryless=boundaryless

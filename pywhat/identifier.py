@@ -60,7 +60,9 @@ class Identifier:
             str_path = Path(string)
             if not only_text and str_path.is_file():
                 if text_path.is_dir():
-                    short_name = str(str_path.relative_to(text_path))
+                    # short_name = str(str_path.relative_to(text_path))
+                    import os.path
+                    short_name = os.path.relpath(str_path, text_path)
                 else:
                     short_name = str_path.name
 
